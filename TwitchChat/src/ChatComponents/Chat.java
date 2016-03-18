@@ -4,9 +4,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import org.jibble.pircbot.PircBot;
 
 import dao.DefaultUserDAO;
@@ -20,7 +17,6 @@ import models.IChatListener;
 import models.Settings;
 import models.SettingsBuilder;
 import models.User;
-import models.UserState;
 
 public class Chat extends PircBot implements IBroadcastListener
 {
@@ -70,8 +66,8 @@ public class Chat extends PircBot implements IBroadcastListener
 
 	private void connectToIRC(Settings settings) throws ConnectionException
 	{
-		this.setVerbose(true);
 		this.setName(settings.getSetting("botname").toString());
+		//this.setVerbose(true);
 		server = settings.getSetting("server").toString();
 		int port = Integer.parseInt(settings.getSetting("port").toString());
 		String oauthkey = settings.getSetting("oauthkey").toString();
@@ -81,8 +77,8 @@ public class Chat extends PircBot implements IBroadcastListener
 			e.printStackTrace();
 			throw new ConnectionException("Could not connect to server " + settings.getSetting("server").toString() + ":"+settings.getSetting("port").toString()+", Username "+settings.getSetting("botname").toString());
 		}
-		channel = settings.getSetting("channelname").toString();
-		this.joinChannel("#"+channel);
+		channel = "#"+settings.getSetting("channelname").toString();
+		this.joinChannel(channel);
 	}
 
 	public void addListener(IChatListener toAdd) {
@@ -109,7 +105,7 @@ public class Chat extends PircBot implements IBroadcastListener
 		User u;
 		
 		u = findUserByUsername(username);
-		u.setOnline();
+		u.visitedThisSession();
 		u.addOneTimeWritten();
 		saveUsers();
 		
@@ -150,7 +146,7 @@ public class Chat extends PircBot implements IBroadcastListener
 	{
 		try
 		{
-			addUserIfNotExists(sender, UserState.Viewer);
+			addUserIfNotExists(sender);
 			userMessage(sender, message);
 		}
 		catch (UserNotFoundException | IOException e)
@@ -160,83 +156,17 @@ public class Chat extends PircBot implements IBroadcastListener
 		}
 	}
 	
-	private void addUserIfNotExists(String sender, UserState status) throws FileNotFoundException, IOException
+	private void addUserIfNotExists(String sender) throws FileNotFoundException, IOException
 	{
 		if(!isUserExistent(sender))
 		{
 			synchronized (userlistlock)
 			{
-				User u = new User(sender, status);
+				User u = new User(sender);
 				this.addUser(u);
 				this.userJoined(u);
-				u.setOnline();
 				saveUsers();
 			}
-		}
-	}
-	
-	public void updateUsers(Map<String, UserState> map) throws FileNotFoundException, IOException
-	{
-		synchronized (userlistlock)
-		{
-			//Neue User herausfinden und hinzufügen
-			for(Entry<String, UserState> entry:map.entrySet())
-			{
-				String username = entry.getKey();
-				UserState status = entry.getValue();
-				
-				if(isUserExistent(username))
-				{
-					try
-					{
-						User u = findUserByUsername(username);
-						u.setOnline();
-					}
-					catch (UserNotFoundException e)
-					{
-						addUserIfNotExists(username, status);
-					}
-				}
-				else
-				{
-					addUserIfNotExists(username, status);
-				}
-			}
-		}
-		
-		synchronized (userlistlock)
-		{
-			//Verschwundene user updaten
-			for(User user:users)
-			{
-				if(user.isOnline())
-				{
-					Boolean found = false;
-					UserState state = null;
-					for(Entry<String, UserState> entry:map.entrySet())
-					{
-						if(entry.getKey().equals(user.getUsername()))
-						{
-							found = true;
-							if(!entry.getValue().equals(user.getUserstate()))
-							{
-								state = entry.getValue();
-							}
-						}
-					}
-					
-					if(!found)
-					{
-						user.setOffline();
-					}
-					else if(state != null)
-					{
-						user.setUserstate(state);
-					}
-				}
-			}
-			
-			saveUsers();
 		}
 	}
 
@@ -289,7 +219,10 @@ public class Chat extends PircBot implements IBroadcastListener
 	{
 		usersUpdated(users);
 		
-		new DefaultUserDAO().saveUsers(users, path);
+		synchronized (userlistlock)
+		{
+			new DefaultUserDAO().saveUsers(users, path);
+		}
 	}
 
 	public List<User> getUsersList()

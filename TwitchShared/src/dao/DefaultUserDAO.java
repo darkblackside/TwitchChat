@@ -41,8 +41,7 @@ public class DefaultUserDAO implements IUserDAO {
 		
 		for(int i = 0; i < no; i++)
 		{
-			User u = (User) ois.readObject();
-			users.add(u);
+			users.add((User) ois.readObject());
 		}
 		
 		ois.close();
