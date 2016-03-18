@@ -1,13 +1,18 @@
 package ChatComponents;
-import java.util.ArrayList;
-import java.util.List;
-import models.User;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+import models.UserState;
+import twitchRestApi.UserFunctions;
 
 public class UserManager implements Runnable
 {
+	Chat c;
+	
 	public UserManager(Chat c)
 	{		
-		findNewUsers(true);
+		this.c = c;
 	}
 
 	@Override
@@ -15,40 +20,32 @@ public class UserManager implements Runnable
 	{
 		while(true)
 		{
-			findNewUsers(false);
+			int retry = 60;
 			
-			findDisconnectedUsers();
+			Map<String, UserState> map = new HashMap<String, UserState>();
+			try {
+				map = new UserFunctions().getChatUsers(c.getChannel());
+				
+				try {
+					c.updateUsers(map);
+				} catch (IOException e1) {
+					System.out.println("Could not synchronize online users list with offline users list.");
+				}
+			}
+			catch (IOException e)
+			{
+				System.out.println("API error, retry in 30 seconds");
+				
+				retry = 30;
+			}
 			
 			try
 			{
-				Thread.sleep(10000);
+				Thread.sleep(retry*1000);
 			}
 			catch (InterruptedException e)
 			{
 			}
 		}
-	}
-
-	private void findDisconnectedUsers()
-	{
-	}
-
-	private void findNewUsers(boolean firstConnect) 
-	{
-	}
-	
-	@SuppressWarnings("unused")
-	private List<User> getUserList()
-	{
-		List<User> users = new ArrayList<User>();
-		/*try {
-			HttpResponse<JsonNode> jsonResponse = Unirest.get("http://tmi.twitch.tv/group/user/" + SettingsBuilder.getSettings().getSetting("channelname").toString() + "/chatters")
-					  .asJson();
-		} catch (UnirestException | SettingsNotInitializedException e)
-		{
-			e.printStackTrace();
-		}*/
-		
-		return users;
 	}
 }

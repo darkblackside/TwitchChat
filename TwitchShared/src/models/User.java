@@ -8,31 +8,31 @@ public class User implements Serializable
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 7451244106156367916L;
+	private static final long serialVersionUID = 7451245106154367916L;
 	private String nickname;
 	private Date created;
-	private transient boolean visitedThisSession = false;
+	private transient Date visitedThisSession = null;
 	private int timesVisited = 0;
 	private int timesWritten = 0;
-	private transient boolean online = false;
+	private UserState userstate;
 	private long onlinetime = 0;
-	private Date onlineSince;
 	
-	public User(String username)
+	public User(String username, UserState status)
 	{
+		visitedThisSession = new Date(0);
 		nickname = username;
+		userstate = status;
 		created = new Date();
-		onlineSince = null;
 	}
 	
 	public String getUsername()
 	{
+		if(isOnline())
+		{
+			onlinetime = onlinetime + new Date().getTime() - visitedThisSession.getTime();
+			visitedThisSession = new Date();
+		}
 		return nickname;
-	}
-	
-	public void setUsername(String username)
-	{
-		nickname = username;
 	}
 	
 	public Date getCreated()
@@ -40,18 +40,9 @@ public class User implements Serializable
 		return created;
 	}
 	
-	public boolean getVisitedThisSession()
+	public Date getVisitedThisSession()
 	{
 		return visitedThisSession;
-	}
-	
-	public void visitedThisSession()
-	{
-		if(!visitedThisSession)
-		{
-			addOneTimeVisited();
-		}
-		visitedThisSession = true;
 	}
 	
 	private void addOneTimeVisited()
@@ -59,14 +50,24 @@ public class User implements Serializable
 		timesVisited++;
 	}
 	
-	private void setOnline()
+	public void setOnline()
 	{
-		online = true;
+		System.out.println("User " + getUsername() + " is now online");
+		if(visitedThisSession == null)
+		{
+			addOneTimeVisited();
+			visitedThisSession = new Date();
+		}
 	}
 	
-	private void setOffline()
+	public void setOffline()
 	{
-		online = false;
+		System.out.println("User " + getUsername() + " is now offline");
+		if(!(visitedThisSession == null))
+		{
+			onlinetime = onlinetime + new Date().getTime() - visitedThisSession.getTime();
+			visitedThisSession = null;
+		}
 	}
 	
 	public int getTimesVisited()
@@ -81,13 +82,22 @@ public class User implements Serializable
 	
 	public void addOneTimeWritten()
 	{
-		visitedThisSession();
 		setOnline();
 		timesWritten++;
 	}
 	
 	public boolean isOnline()
 	{
-		return online;
+		return !(visitedThisSession == null);
+	}
+
+	public UserState getUserstate()
+	{
+		return userstate;
+	}
+
+	public void setUserstate(UserState userstate)
+	{
+		this.userstate = userstate;
 	}
 }

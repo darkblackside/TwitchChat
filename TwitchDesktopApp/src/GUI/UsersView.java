@@ -19,6 +19,7 @@ public class UsersView extends JFrame
 	JList<String> userslist;
 	JScrollPane scrollpane;
 	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public UsersView(List<User> users)
 	{
 		super("Users visited this session");
