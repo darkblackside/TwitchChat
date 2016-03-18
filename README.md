@@ -8,3 +8,6 @@ It's not quite ready yet, but the chat feature works. If you want to edit or com
 If you've questions send me a private message. If you want to contribute - write me. If you've ideas for what would be useful, add it under issues or write me a message.
 
 I hope this is all for now.
+
+And by the way - 
+I don't like the word bot :)
