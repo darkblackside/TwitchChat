@@ -7,11 +7,12 @@ import javax.swing.JOptionPane;
 
 import ChatComponents.Chat;
 import GUI.Controllers.ChatController;
+import GUI.Controllers.SettingsController;
+import dao.DefaultSettingsDAO;
 import exceptions.ConnectionException;
 import exceptions.NoSettingsException;
 import exceptions.SettingsNotInitializedException;
 import models.Settings;
-import models.SettingsBuilder;
 
 public class Mainframe extends JFrame
 {
@@ -22,7 +23,7 @@ public class Mainframe extends JFrame
 	private OptionPane tabbedpane;
 	private Chat c;
 	
-	public Mainframe()
+	public Mainframe() throws SettingsNotInitializedException, ClassNotFoundException, IOException
 	{
 		//Initializing settings, views and controllers
 		initializeSettings();
@@ -34,12 +35,22 @@ public class Mainframe extends JFrame
 			showError("Error while connecting to Server");
 			if(JOptionPane.showConfirmDialog(this, "Do you want to reconfigure the system?") == JOptionPane.YES_OPTION)
 			{
-				SettingsBuilder.deleteConfig(true);
+				DefaultSettingsDAO.getInstance().deleteSettings(true);
 				showError("Please restart application in order to reconfigure");
 			}
 		}
 		
+		initializeGUI();
+	}
+	
+	private void initializeGUI() throws SettingsNotInitializedException, ClassNotFoundException, IOException
+	{
 		tabbedpane = new OptionPane();
+		
+		SettingsView settings = new SettingsView();
+		SettingsController settingscontroller = new SettingsController(settings);
+		tabbedpane.addTabbedComponent("Settings", settings);
+		settings.addActionListenerForButtons(settingscontroller);
 		
 		this.setLayout(new FlowLayout());
 		ChatView chView = new ChatView();
@@ -53,7 +64,7 @@ public class Mainframe extends JFrame
 		this.setVisible(true);
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 	}
-	
+
 	private void showError(String string)
 	{
 		JOptionPane.showMessageDialog(this, string, "Error", JOptionPane.ERROR_MESSAGE);
@@ -69,18 +80,18 @@ public class Mainframe extends JFrame
 		s.addSetting("oauthkey", "oauth:xxxx");
 		s.addSetting("channelname", "darkblackside");
 		
-		if(!SettingsBuilder.settingsFileExists())
+		if(!DefaultSettingsDAO.getInstance().settingsExist())
 		{
 			s.updateSetting("botname", JOptionPane.showInputDialog("Name your chatbot (likely your channelname on twitch)"));
 			s.updateSetting("oauthkey", JOptionPane.showInputDialog("Enter your oauth key (for beta you have to get the key without this program)"));
 			s.updateSetting("channelname", JOptionPane.showInputDialog("Type your channelname"));
-		}
-		
-		try {
-			SettingsBuilder.initialize(s);
-		} catch (ClassNotFoundException | IOException e) {
-			showError("Error while initializing settings");
-			e.printStackTrace();
+						
+			try {
+				DefaultSettingsDAO.getInstance().saveSettings(s);
+			} catch (IOException e) {
+				showError("Error while initializing settings");
+				e.printStackTrace();
+			}
 		}
 	}
 

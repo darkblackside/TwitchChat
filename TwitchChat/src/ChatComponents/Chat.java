@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.jibble.pircbot.PircBot;
 
+import dao.DefaultSettingsDAO;
 import dao.DefaultUserDAO;
 import exceptions.ConnectionException;
 import exceptions.NoSettingsException;
@@ -14,18 +15,22 @@ import exceptions.UserNotFoundException;
 import models.ChatMessage;
 import models.IBroadcastListener;
 import models.IChatListener;
+import models.ISettingsChangedListener;
 import models.Settings;
-import models.SettingsBuilder;
 import models.User;
 
-public class Chat extends PircBot implements IBroadcastListener
+public class Chat extends PircBot implements IBroadcastListener, ISettingsChangedListener
 {
 	private static final String path = "users.ser";
 	
 	private List<IChatListener> listeners = new ArrayList<IChatListener>();
 	
+	private String botname;
 	private String channel;
 	private String server;
+	private int port;
+	private String authkey;
+	private String channelname;
 	private List<models.User> users;
 	public Object userlistlock;
 	private UserManager um;
@@ -47,16 +52,8 @@ public class Chat extends PircBot implements IBroadcastListener
 		
 		userlistlock = new Object();
 		
-		Settings settings = SettingsBuilder.getSettings();
-		
-		if(settings.getSetting("botname") != null && settings.getSetting("server") != null && settings.getSetting("port") != null && settings.getSetting("oauthkey") != null && settings.getSetting("channelname") != null)
-		{
-			connectToIRC(settings);
-		}
-		else
-		{
-			throw new NoSettingsException();
-		}
+		DefaultSettingsDAO.getInstance().addSettingsChangedListener(this);
+		connectToIRC();
 		
 		messages = new ArrayList<ChatMessage>();
 		
@@ -64,21 +61,34 @@ public class Chat extends PircBot implements IBroadcastListener
 		(new Thread(um)).start();
 	}
 
-	private void connectToIRC(Settings settings) throws ConnectionException
+	private void connectToIRC() throws ConnectionException, ClassNotFoundException, IOException
 	{
-		this.setName(settings.getSetting("botname").toString());
-		//this.setVerbose(true);
-		server = settings.getSetting("server").toString();
-		int port = Integer.parseInt(settings.getSetting("port").toString());
-		String oauthkey = settings.getSetting("oauthkey").toString();
-		try {
-			this.connect(server, port, oauthkey);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new ConnectionException("Could not connect to server " + settings.getSetting("server").toString() + ":"+settings.getSetting("port").toString()+", Username "+settings.getSetting("botname").toString());
+		Settings settings = DefaultSettingsDAO.getInstance().getSettings();
+		
+		if(settings.getSetting("botname") != null && settings.getSetting("server") != null && settings.getSetting("port") != null && settings.getSetting("oauthkey") != null && settings.getSetting("channelname") != null &&
+				(!settings.getSetting("botname").toString().equals(botname) || !settings.getSetting("server").equals(server) || !settings.getSetting("port").toString().equals(port) || !settings.getSetting("oauthkey").toString().equals(authkey) || !settings.getSetting("channelname").toString().equals(channelname)))
+		{
+			if(this.isConnected())
+			{
+				this.disconnect();
+			}
+			
+			botname = settings.getSetting("botname").toString();
+			this.setName(botname);
+			//this.setVerbose(true);
+			server = settings.getSetting("server").toString();
+			port = Integer.parseInt(settings.getSetting("port").toString());
+			authkey= settings.getSetting("oauthkey").toString();
+			try {
+				this.connect(server, port, authkey);
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new ConnectionException("Could not connect to server " + settings.getSetting("server").toString() + ":"+settings.getSetting("port").toString()+", Username "+settings.getSetting("botname").toString());
+			}
+			channelname = settings.getSetting("channelname").toString();
+			channel = "#"+channelname;
+			this.joinChannel(channel);
 		}
-		channel = "#"+settings.getSetting("channelname").toString();
-		this.joinChannel(channel);
 	}
 
 	public void addListener(IChatListener toAdd) {
@@ -178,7 +188,7 @@ public class Chat extends PircBot implements IBroadcastListener
 	
 	public String getChannel()
 	{
-		return channel;
+		return channelname;
 	}
 	
 	public void addUser(User u) throws FileNotFoundException, IOException
@@ -199,6 +209,7 @@ public class Chat extends PircBot implements IBroadcastListener
 	{
 		return users.get(i);
 	}
+	
 	private boolean isUserExistent(String username)
 	{
 		synchronized (userlistlock)
@@ -234,5 +245,16 @@ public class Chat extends PircBot implements IBroadcastListener
 	public void receiveMessage(String message)
 	{
 		send(message);
+	}
+
+	@Override
+	public void notifySettingsChanged()
+	{
+		try {
+			connectToIRC();
+		} catch (ClassNotFoundException | ConnectionException | IOException e) {
+			System.out.println("Could not reconnect with new settings!");
+			System.exit(1);
+		}
 	}
 }

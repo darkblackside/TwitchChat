@@ -1,10 +1,12 @@
 package GUI;
 
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
 public class OptionPane extends JTabbedPane
@@ -26,7 +28,9 @@ public class OptionPane extends JTabbedPane
 	public void addTabbedComponent(String s, JComponent newComponent)
 	{
 		tabbedComponents.put(s, newComponent);
-		this.addTab(s, newComponent);
+		JPanel tmp = new JPanel(new FlowLayout());
+		tmp.add(newComponent);
+		this.addTab(s, tmp);
 	}
 	
 	public JComponent getTabbedComponent(String s)

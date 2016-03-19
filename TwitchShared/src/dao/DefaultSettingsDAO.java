@@ -1,5 +1,6 @@
 package dao;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -9,38 +10,83 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import models.ISettingsChangedListener;
 import models.Settings;
 
 public class DefaultSettingsDAO implements ISettingsDAO
-{	
-	@Override
-	public void saveSettings(Settings s, String path) throws IOException
+{
+	public static final String path = "settings.ser";
+	
+	private List<ISettingsChangedListener> listeners;
+	private static DefaultSettingsDAO self;
+	private Settings cache;
+	
+	private DefaultSettingsDAO()
 	{
+		listeners = new ArrayList<ISettingsChangedListener>();
+	}
+	
+	public static DefaultSettingsDAO getInstance()
+	{
+		if(self == null)
+		{
+			self = new DefaultSettingsDAO();
+		}
+		return self;
+	}
+	
+	@Override
+	public void saveSettings(Settings s) throws IOException
+	{		
 		FileOutputStream fos = new FileOutputStream(path);
 		ObjectOutputStream oos = new ObjectOutputStream(fos);
 		
 		oos.writeObject(s.getSettings());
 		oos.close();
-	}
 
+		settingsChanged();
+	}
+	
 	@Override
-	public void saveSettingsList(List<Settings> s, String path) throws IOException
+	public Settings getSettings(boolean forceload) throws ClassNotFoundException, IOException
 	{
-		FileOutputStream fos = new FileOutputStream(path);
-		ObjectOutputStream oos = new ObjectOutputStream(fos);
-		
-		oos.writeInt(s.size());
-		
-		for(Settings settings:s)
+		if(forceload)
 		{
-			oos.writeObject(settings.getSettings());
+			cache = null;
 		}
 		
-		oos.close();
+		if(cache == null)
+		{
+			cache = loadSettings();
+		}
+		
+		return cache;
+	}
+	
+	public void deleteSettings(boolean confirm)
+	{
+		if(confirm)
+		{
+			new File(path).delete();
+		}
+	}
+	
+	public void addSettingsChangedListener(ISettingsChangedListener listener)
+	{
+		listeners.add(listener);
+	}
+	
+	private void settingsChanged()
+	{
+		cache = null;
+		
+		for(ISettingsChangedListener listener:listeners)
+		{
+			listener.notifySettingsChanged();
+		}
 	}
 
-	@Override
-	public Settings loadSettings(String path) throws IOException, ClassNotFoundException
+	private Settings loadSettings() throws IOException, ClassNotFoundException
 	{
 		FileInputStream fis = new FileInputStream(path);
 		ObjectInputStream ois = new ObjectInputStream(fis);
@@ -53,24 +99,18 @@ public class DefaultSettingsDAO implements ISettingsDAO
 		return s;
 	}
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public List<Settings> loadSettingsList(String path) throws IOException, ClassNotFoundException
+	public boolean settingsExist()
 	{
-		FileInputStream fis = new FileInputStream(path);
-		ObjectInputStream ois = new ObjectInputStream(fis);
-		
-		int no = ois.readInt();
-		List<Settings> s = new ArrayList<Settings>();
-		
-		for(int i = 0; i < no; i++)
+		if(new File(path).exists())
 		{
-			s.add(new Settings((HashMap<String, Object>) ois.readObject()));
+			return true;
 		}
-		
-		ois.close();
-		
-		return s;
+		return false;
 	}
 
+	@Override
+	public Settings getSettings() throws ClassNotFoundException, IOException
+	{
+		return getSettings(false);
+	}
 }
