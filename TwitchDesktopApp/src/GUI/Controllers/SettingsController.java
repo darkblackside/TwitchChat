@@ -4,7 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 
-import GUI.SettingsView;
+import GUI.OptionPanes.SettingsView;
 import dao.DefaultSettingsDAO;
 import exceptions.SettingsNotInitializedException;
 import models.Settings;

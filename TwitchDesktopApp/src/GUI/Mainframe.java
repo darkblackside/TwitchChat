@@ -6,8 +6,11 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
 import ChatComponents.Chat;
+import GUI.Controllers.ChannelController;
 import GUI.Controllers.ChatController;
 import GUI.Controllers.SettingsController;
+import GUI.OptionPanes.ChannelView;
+import GUI.OptionPanes.SettingsView;
 import dao.DefaultSettingsDAO;
 import exceptions.ConnectionException;
 import exceptions.NoSettingsException;
@@ -51,6 +54,11 @@ public class Mainframe extends JFrame
 		SettingsController settingscontroller = new SettingsController(settings);
 		tabbedpane.addTabbedComponent("Settings", settings);
 		settings.addActionListenerForButtons(settingscontroller);
+		
+		ChannelView channel = new ChannelView();
+		ChannelController channelcontroller = new ChannelController(channel);
+		tabbedpane.addTabbedComponent("Channel", channel);
+		channel.addActionListenerForButtons(channelcontroller);
 		
 		this.setLayout(new FlowLayout());
 		ChatView chView = new ChatView();

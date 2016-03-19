@@ -1,4 +1,4 @@
-package GUI;
+package GUI.OptionPanes;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
