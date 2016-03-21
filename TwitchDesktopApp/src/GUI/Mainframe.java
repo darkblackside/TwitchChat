@@ -1,9 +1,14 @@
 package GUI;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.HeadlessException;
 import java.io.IOException;
+import java.net.URL;
 
+import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
 
 import ChatComponents.Chat;
 import GUI.Controllers.ChannelController;
@@ -12,10 +17,12 @@ import GUI.Controllers.SettingsController;
 import GUI.OptionPanes.ChannelView;
 import GUI.OptionPanes.SettingsView;
 import dao.DefaultSettingsDAO;
+import exceptions.AuthTokenNotFoundException;
 import exceptions.ConnectionException;
 import exceptions.NoSettingsException;
 import exceptions.SettingsNotInitializedException;
 import models.Settings;
+import twitchRestApi.APIKeyConnection;
 
 public class Mainframe extends JFrame
 {
@@ -26,7 +33,7 @@ public class Mainframe extends JFrame
 	private OptionPane tabbedpane;
 	private Chat c;
 	
-	public Mainframe() throws SettingsNotInitializedException, ClassNotFoundException, IOException
+	public Mainframe() throws SettingsNotInitializedException, ClassNotFoundException, IOException, HeadlessException, AuthTokenNotFoundException
 	{
 		//Initializing settings, views and controllers
 		initializeSettings();
@@ -78,7 +85,7 @@ public class Mainframe extends JFrame
 		JOptionPane.showMessageDialog(this, string, "Error", JOptionPane.ERROR_MESSAGE);
 	}
 
-	private void initializeSettings()
+	private void initializeSettings() throws HeadlessException, AuthTokenNotFoundException
 	{
 		//Wichtig, da sonst die Settings nicht funktionieren:
 		Settings s = new Settings();
@@ -100,6 +107,31 @@ public class Mainframe extends JFrame
 				showError("Error while initializing settings");
 				e.printStackTrace();
 			}
+		}
+	
+		try
+		{
+			Object mightykey = DefaultSettingsDAO.getInstance().getSettings().getSetting("mightyoauthkey");
+			
+			if(mightykey == null)
+			{
+				Settings s2 = DefaultSettingsDAO.getInstance().getSettings();
+				
+				s2.addSetting("mightyoauthkey", "");
+				
+				s2.updateSetting("mightyoauthkey", APIKeyConnection.getAuthToken(JOptionPane.showInputDialog("Type your API Key (visit " + APIKeyConnection.editUrl + " and authorize. Paste result url here.")));
+
+				try {
+					DefaultSettingsDAO.getInstance().saveSettings(s2);
+				} catch (IOException e) {
+					showError("Error while initializing settings");
+					e.printStackTrace();
+				}
+			}
+		}
+		catch (ClassNotFoundException | IOException e)
+		{
+			showError("Error while initializing settings");
 		}
 	}
 

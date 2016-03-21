@@ -1,11 +1,15 @@
 package twitchRestApi;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Date;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import org.json.JSONObject;
 
@@ -102,5 +106,50 @@ public class ChannelFunctions
 	    connection.connect();
 	    
 	    return connection;
+	}
+	
+	private HttpURLConnection putConnection(URL url, String oauthtoken) throws IOException
+	{
+	    HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+	    connection.addRequestProperty("Authorization", "OAuth " + oauthtoken);
+	    connection.setDoOutput(true); 
+	    connection.setDoInput(true);
+	    connection.setInstanceFollowRedirects(false); 
+	    connection.setRequestMethod("PUT");
+	    connection.setRequestProperty("Content-Type", "application/json"); 
+	    connection.setRequestProperty("Accept", "application/json"); 
+	    connection.setRequestProperty("charset", "utf-8");
+	    
+	    return connection;
+	}
+
+	public void saveChannel(Channel c, String channelname, String oauthtoken) throws IOException
+	{
+		String request = getChannelAdress;
+		request = request.replace("<<<username>>>", channelname);
+		
+		URL url = new URL(request); 
+	    
+	    HttpURLConnection connection = putConnection(url, oauthtoken);
+	    
+	    try(BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()))){
+	    	
+	    }
+	    
+	    JSONObject object = new JSONObject();
+	    
+	    JSONObject channelObject = new JSONObject();
+	    channelObject.append("status", c.getStatus());
+	    channelObject.append("game", c.getGame());
+	    channelObject.append("mature", c.isMature());
+	    channelObject.append("broadcaster_language", c.getBroadcasterLanguage());
+	    
+	    object.append("channel", channelObject);
+	    
+	    try(BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()))){
+	    	writer.write(object.toString());
+	    }
+	    
+	    connection.disconnect();
 	}
 }

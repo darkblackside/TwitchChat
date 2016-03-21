@@ -4,12 +4,17 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.event.ActionListener;
 
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 
 import GUI.Controllers.ChannelController;
+import ViewModels.ChannelViewModel;
 import twitchModels.Channel;
 
 public class ChannelView extends JPanel
@@ -18,12 +23,12 @@ public class ChannelView extends JPanel
 	 * 
 	 */
 	private static final long serialVersionUID = 8854986657701325171L;
-	private JLabel status;
+	private JTextField status;
 	private JLabel statusLabel;
-	private JLabel broadcasterLanguage;
+	private JTextField broadcasterLanguage;
 	private JLabel broadcasterLanguageLabel;
 	private JLabel displayName;
-	private JLabel game;
+	private JTextField game;
 	private JLabel gameLabel;
 	private JLabel language;
 	private JCheckBox partner;
@@ -34,18 +39,20 @@ public class ChannelView extends JPanel
 	private JLabel followers;
 	private JCheckBox matureAudience;
 	private JLabel matureAudienceLabel;
+	private JButton edit;
+	private JButton abort;
 	
 	public ChannelView()
 	{
-		status = new JLabel("");
+		status = new JTextField("");
 		statusLabel = new JLabel("Status: ");
 		
-		broadcasterLanguage = new JLabel("");
+		broadcasterLanguage = new JTextField("");
 		broadcasterLanguageLabel = new JLabel("Broadcaster language: ");
 		
 		displayName = new JLabel("");
 		
-		game = new JLabel("");
+		game = new JTextField("");
 		gameLabel = new JLabel("Game: ");
 		
 		language = new JLabel("");
@@ -63,6 +70,12 @@ public class ChannelView extends JPanel
 		matureAudienceLabel = new JLabel("For mature audience ");
 		matureAudience = new JCheckBox();
 		matureAudience.setEnabled(false);
+		
+		edit = new JButton("edit");
+		edit.setActionCommand("edit");
+		abort = new JButton("abort");
+		abort.setActionCommand("abort");
+		abort.setEnabled(false);
 		
 		JPanel top = new JPanel();
 		top.setLayout(new FlowLayout());
@@ -102,15 +115,31 @@ public class ChannelView extends JPanel
 		bottom.add(views);
 		bottom.add(followersLabel);
 		bottom.add(followers);
+		bottom.add(edit);
+		bottom.add(abort);
 
 		bottom.setMinimumSize(new Dimension(380, 40));
 		bottom.setPreferredSize(new Dimension(380, 40));
 		bottom.setVisible(true);
 		
-		this.add(top, BorderLayout.NORTH);
-		this.add(middle, BorderLayout.CENTER);
-		this.add(bottom, BorderLayout.SOUTH);
 		
+		JPanel scrollPanel = new JPanel();
+		scrollPanel.setLayout(new BorderLayout());
+		scrollPanel.add(top, BorderLayout.NORTH);
+		scrollPanel.add(middle, BorderLayout.CENTER);
+		scrollPanel.add(bottom, BorderLayout.SOUTH);
+		scrollPanel.setMinimumSize(new Dimension(380, 400));
+		scrollPanel.setPreferredSize(new Dimension(380, 400));
+		scrollPanel.setMaximumSize(new Dimension(380, 400));
+		scrollPanel.setVisible(true);
+		
+		JScrollPane scrollPane = new JScrollPane(scrollPanel);
+		scrollPane.setMinimumSize(new Dimension(380, 380));
+		scrollPane.setPreferredSize(new Dimension(380, 380));
+		scrollPane.setMaximumSize(new Dimension(380, 380));
+		scrollPane.setVisible(true);
+		
+		this.add(scrollPane, BorderLayout.CENTER);
 		this.setVisible(true);
 	}
 	
@@ -124,9 +153,48 @@ public class ChannelView extends JPanel
 		partner.setSelected(c.isPartner());
 		matureAudience.setSelected(c.isMature());
 	}
-
-	public void addActionListenerForButtons(ChannelController channelcontroller)
+	
+	public void setActive()
 	{
+		status.setEditable(true);
+		broadcasterLanguage.setEditable(true);
+		matureAudience.setEnabled(true);
+		game.setEditable(true);
+		abort.setEnabled(true);
+		edit.setText("save");
+		edit.setActionCommand("save");
+	}
+	
+	public void setInactive()
+	{
+		status.setEditable(false);
+		broadcasterLanguage.setEditable(false);
+		matureAudience.setEnabled(false);
+		game.setEditable(false);
+		abort.setEnabled(false);
+		edit.setText("edit");
+		edit.setActionCommand("edit");
+	}
+	
+	public boolean isActive()
+	{
+		return abort.isEnabled();
+	}
+
+	public void addActionListenerForButtons(ActionListener channelcontroller)
+	{
+		abort.addActionListener(channelcontroller);
+		edit.addActionListener(channelcontroller);
+	}
+
+	public ChannelViewModel getChannelInformation() {
+		ChannelViewModel viewModel = new ChannelViewModel();
 		
+		viewModel.status = status.getText();
+		viewModel.broadcasterlanguage = broadcasterLanguage.getText();
+		viewModel.game = game.getText();
+		viewModel.isMatureContent = matureAudience.isSelected();
+		
+		return viewModel;
 	}
 }
