@@ -18,8 +18,10 @@ import GUI.OptionPanes.ChannelView;
 import GUI.OptionPanes.SettingsView;
 import dao.DefaultSettingsDAO;
 import exceptions.AuthTokenNotFoundException;
+import exceptions.ChannelAPINotCallableException;
 import exceptions.ConnectionException;
 import exceptions.NoSettingsException;
+import exceptions.SettingNotInitializedException;
 import exceptions.SettingsNotInitializedException;
 import models.Settings;
 import twitchRestApi.APIKeyConnection;
@@ -50,10 +52,19 @@ public class Mainframe extends JFrame
 			}
 		}
 		
-		initializeGUI();
+		try
+		{
+			initializeGUI();
+		}
+		catch (ChannelAPINotCallableException | SettingNotInitializedException e)
+		{
+			e.printStackTrace();
+
+			showError("There was an error while initializing the GUI, please ask darkblackside or twitch forum for help");
+		}
 	}
 	
-	private void initializeGUI() throws SettingsNotInitializedException, ClassNotFoundException, IOException
+	private void initializeGUI() throws SettingsNotInitializedException, ClassNotFoundException, IOException, ChannelAPINotCallableException, SettingNotInitializedException
 	{
 		tabbedpane = new OptionPane();
 		

@@ -4,7 +4,7 @@ import java.util.Date;
 
 public class Channel
 {
-	private boolean mature;
+	private Boolean mature;
 	private String status;
 	private String broadcaster_language;
 	private String display_name;
@@ -13,22 +13,22 @@ public class Channel
 	private String name;
 	private Date created_at;
 	private Date updated_at;
-	private int delay;
+	private Integer delay;
 	private String logo;
 	private String banner;
 	private String video_banner;
 	private String background;
 	private String profile_banner;
 	private String profile_banner_background_color;
-	private boolean partner;
+	private Boolean partner;
 	private String url;
-	private int views;
-	private int followers;
+	private Integer views;
+	private Integer followers;
 	
-	public boolean isMature() {
+	public Boolean isMature() {
 		return mature;
 	}
-	public void setMature(boolean mature) {
+	public void setMature(Boolean mature) {
 		this.mature = mature;
 	}
 	public String getStatus() {
@@ -79,11 +79,12 @@ public class Channel
 	public void setUpdatedAt(Date updated_at) {
 		this.updated_at = updated_at;
 	}
-	public int getDelay() {
+	public Integer getDelay() {
 		return delay;
 	}
-	public void setDelay(String string) {
-		this.delay = Integer.parseInt(string);
+	public void setDelay(Integer i)
+	{
+			this.delay = i;
 	}
 	public String getLogo() {
 		return logo;
@@ -121,10 +122,10 @@ public class Channel
 	public void setProfileBannerBackgroundColor(String profile_banner_background_color) {
 		this.profile_banner_background_color = profile_banner_background_color;
 	}
-	public boolean isPartner() {
+	public Boolean isPartner() {
 		return partner;
 	}
-	public void setPartner(boolean partner) {
+	public void setPartner(Boolean partner) {
 		this.partner = partner;
 	}
 	public String getUrl() {
@@ -133,16 +134,16 @@ public class Channel
 	public void setUrl(String url) {
 		this.url = url;
 	}
-	public int getViews() {
+	public Integer getViews() {
 		return views;
 	}
-	public void setViews(int views) {
+	public void setViews(Integer views) {
 		this.views = views;
 	}
-	public int getFollowers() {
+	public Integer getFollowers() {
 		return followers;
 	}
-	public void setFollowers(int followers) {
+	public void setFollowers(Integer followers) {
 		this.followers = followers;
 	}
 }

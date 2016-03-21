@@ -150,8 +150,22 @@ public class ChannelView extends JPanel
 		displayName.setText(c.getName());
 		game.setText(c.getGame());
 		language.setText(c.getLanguage());
-		partner.setSelected(c.isPartner());
-		matureAudience.setSelected(c.isMature());
+		if(c.isPartner() == null)
+		{
+			partner.setSelected(false);
+		}
+		else
+		{
+			partner.setSelected(c.isPartner());
+		}
+		if(c.isMature() == null)
+		{
+			matureAudience.setSelected(false);
+		}
+		else
+		{
+			matureAudience.setSelected(c.isMature());
+		}
 	}
 	
 	public void setActive()

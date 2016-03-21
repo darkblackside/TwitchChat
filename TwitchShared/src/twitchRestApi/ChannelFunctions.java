@@ -6,80 +6,269 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
+import java.sql.Connection;
 import java.util.Date;
+import java.util.Map;
 
+import javax.naming.AuthenticationException;
 import javax.net.ssl.HttpsURLConnection;
+import javax.xml.crypto.URIReferenceException;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import exceptions.ChannelAPINotCallableException;
+import exceptions.ReadNotOpenedException;
+import exceptions.WriteNotOpenedException;
 import twitchModels.Channel;
 
 public class ChannelFunctions
 {
 	public static final String getChannelAdress = "https://api.twitch.tv/kraken/channels/<<<username>>>";
 	
-	
-	private String sendRequest(String request) throws IOException
+	private JSONObject getGetRequest(String requestDestination, Map<String, String> headerValues) throws AuthenticationException, MalformedURLException, JSONException, URIReferenceException, IOException, ReadNotOpenedException
 	{		
-	    URL url = new URL(request); 
-	    
-	    HttpURLConnection connection = getConnection(url);
-	    
-	    String buffer = "";
-	    try( BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-	    	while(reader.ready())
-	    	{
-		    	buffer = buffer + reader.readLine();
-	    	}
-		}
-	    connection.disconnect();
-	    
-	    return buffer;
+		return APIConnection.getConnection(requestDestination, headerValues);
 	}
 	
-	public Channel getChannelInformation(String channelname) throws IOException
+	private JSONObject getPutRequest(String requestDestination, Map<String, String> headerValues, JSONObject toWrite) throws AuthenticationException, JSONException, URIReferenceException, IOException, WriteNotOpenedException, ReadNotOpenedException
+	{
+		return APIConnection.putConnection(requestDestination, headerValues, toWrite);
+	}
+	
+	public Channel getChannelInformation(String channelname, Map<String, String> headers) throws ChannelAPINotCallableException
 	{
 		Channel result = new Channel();
 		
 		String request = getChannelAdress;
 		request = request.replace("<<<username>>>", channelname);
 		
-		String buffer = sendRequest(request);
-		
 		try
 		{
-		    JSONObject json = new JSONObject(buffer);
+		    JSONObject json = getGetRequest(request, headers);
 		    
-		    result.setMature(json.getBoolean("mature"));
-		    result.setStatus(json.getString("status"));
-		    result.setBroadcasterLanguage(json.getString("broadcaster_language"));
-		    result.setDisplayName(json.getString("display_name"));
-		    result.setGame(json.getString("game"));
-		    result.setLanguage(json.getString("language"));
-		    result.setName(json.getString("name"));
-		    result.setCreatedAt(stringToDate(json.getString("created_at")));
-		    result.setUpdatedAt(stringToDate(json.getString("updated_at")));
-		    //result.setDelay(json.getString("delay"));
-		    //result.setLogo(json.getString("logo"));
-		    //result.setBanner(json.getString("banner"));
-		    result.setVideoBanner(json.getString("video_banner"));
-		    //result.setBackground(json.getString("background"));
-		    result.setProfileBanner(json.getString("profile_banner"));
-		    result.setProfileBannerBackgroundColor(json.getString("profile_banner_background_color"));
-		    result.setViews(json.getInt("views"));
-		    result.setFollowers(json.getInt("followers"));
+		    result = jsonObjectToChannel(json);
 		}
 		catch(Exception e)
 		{
 			e.printStackTrace();
 			System.out.println("Error while calling twitch API");
-			throw new IOException();
+			throw new ChannelAPINotCallableException();
 		}
 		
 	    return result;
 	}
+	
+	public Channel updateChannelInformation(String channelname, Map<String, String> headers, Channel c) throws ChannelAPINotCallableException
+	{
+		JSONObject toWrite = new JSONObject();
+	    JSONObject channelObject = new JSONObject();
+	    
+	    if(c.isMature() != null)
+	    {
+		    channelObject.append("mature", c.isMature());
+	    }
+	    if(c.getStatus() != null)
+	    {
+		    channelObject.append("status", c.getStatus());
+	    }
+	    if(c.getGame() != null)
+	    {
+		    channelObject.append("game", c.getGame());
+	    }
+	    if(c.getBroadcasterLanguage() != null)
+	    {
+		    channelObject.append("broadcaster_language", c.getBroadcasterLanguage());
+	    }
+	    if(c.getLanguage() != null)
+	    {
+		    channelObject.append("language", c.getLanguage());
+	    }
+	    if(c.getVideoBanner() != null)
+	    {
+		    channelObject.append("video_banner", c.getVideoBanner());
+	    }
+	    if(c.getProfileBanner() != null)
+	    {
+		    channelObject.append("profile_banner", c.getProfileBanner());
+	    }
+	    if(c.getBackground() != null)
+	    {
+		    channelObject.append("background", c.getBackground());
+	    }
+	    if(c.getBanner() != null)
+	    {
+		    channelObject.append("banner", c.getBanner());
+	    }
+	    if(c.getProfileBannerBackgroundColor() != null)
+	    {
+		    channelObject.append("profile_banner_background_color", c.getProfileBannerBackgroundColor());
+	    }
+	    
+	    toWrite.append("channel", channelObject);
+	    
+		String request = getChannelAdress;
+		request = request.replace("<<<username>>>", channelname);
+		
+	    try
+	    {
+			return jsonObjectToChannel(getPutRequest(request, headers, toWrite));
+		}
+	    catch (AuthenticationException | JSONException | URIReferenceException | IOException | WriteNotOpenedException
+				| ReadNotOpenedException e)
+	    {
+			e.printStackTrace();
+			throw new ChannelAPINotCallableException();
+		}
+	}
 
+
+	private Channel jsonObjectToChannel(JSONObject json)
+	{
+		Channel result = new Channel();
+		
+		if(!json.get("mature").toString().equals("null"))
+		{
+		    result.setMature(json.getBoolean("mature"));
+		}
+		else
+		{
+			result.setMature(null);
+		}
+		if(!json.get("status").toString().equals("null"))
+		{
+		    result.setStatus(json.getString("status"));
+		}
+		else
+		{
+			result.setStatus(null);
+		}
+		if(!json.get("display_name").toString().equals("null"))
+		{
+		    result.setDisplayName(json.getString("display_name"));
+		}
+		else
+		{
+			result.setDisplayName(null);
+		}
+		if(!json.get("game").toString().equals("null"))
+		{
+		    result.setGame(json.getString("game"));
+		}
+		else
+		{
+			result.setGame(null);
+		}
+		if(!json.get("language").toString().equals("null"))
+		{
+		    result.setLanguage(json.getString("language"));
+		}
+		else
+		{
+			result.setLanguage(null);
+		}
+		if(!json.get("name").toString().equals("null"))
+		{
+		    result.setName(json.getString("name"));
+		}
+		else
+		{
+			result.setName(null);
+		}
+		if(!json.get("created_at").toString().equals("null"))
+		{
+		    result.setCreatedAt(stringToDate(json.getString("created_at")));
+		}
+		else
+		{
+			result.setCreatedAt(null);
+		}
+		if(!json.get("updated_at").toString().equals("null"))
+		{
+		    result.setUpdatedAt(stringToDate(json.getString("updated_at")));
+		}
+		else
+		{
+			result.setUpdatedAt(null);
+		}
+		if(!json.get("delay").toString().equals("null"))
+		{
+		    result.setDelay(json.getInt("delay"));
+		}
+		else
+		{
+			result.setDelay(null);
+		}
+		if(!json.get("logo").toString().equals("null"))
+		{
+		    result.setLogo(json.getString("logo"));
+		}
+		else
+		{
+			result.setLogo(null);
+		}
+		if(!json.get("banner").toString().equals("null"))
+		{
+		    result.setBanner(json.getString("banner"));
+		}
+		else
+		{
+			result.setBanner(null);
+		}
+		if(!json.get("video_banner").toString().equals("null"))
+		{
+		    result.setVideoBanner(json.getString("video_banner"));
+		}
+		else
+		{
+			result.setVideoBanner(null);
+		}
+		if(!json.get("background").toString().equals("null"))
+		{
+		    result.setBackground(json.getString("background"));
+		}
+		else
+		{
+			result.setBackground(null);
+		}
+		if(!json.get("profile_banner").toString().equals("null"))
+		{
+		    result.setProfileBanner(json.getString("profile_banner"));
+		}
+		else
+		{
+			result.setProfileBanner(null);
+		}
+		if(!json.get("profile_banner_background_color").toString().equals("null"))
+		{
+		    result.setProfileBannerBackgroundColor(json.getString("profile_banner_background_color"));
+		}
+		else
+		{
+			result.setProfileBannerBackgroundColor(null);
+		}
+		if(!json.get("views").toString().equals("null"))
+		{
+		    result.setViews(json.getInt("views"));
+		}
+		else
+		{
+			result.setViews(null);
+		}
+		if(!json.get("followers").toString().equals("null"))
+		{
+		    result.setFollowers(json.getInt("followers"));
+		}
+		else
+		{
+			result.setFollowers(null);
+		}
+	    
+	    return result;
+	}
 
 	private Date stringToDate(String string) {		
 		Date result = new Date();
@@ -93,63 +282,5 @@ public class ChannelFunctions
 		result = new Date(year, month, day, hours, minutes, seconds);		
 			
 		return result;
-	}
-
-	private HttpURLConnection getConnection(URL url) throws IOException {
-
-	    HttpURLConnection connection = (HttpURLConnection) url.openConnection(); 
-	    connection.setDoOutput(true); 
-	    connection.setInstanceFollowRedirects(false); 
-	    connection.setRequestMethod("GET"); 
-	    connection.setRequestProperty("Content-Type", "text/plain"); 
-	    connection.setRequestProperty("charset", "utf-8");
-	    connection.connect();
-	    
-	    return connection;
-	}
-	
-	private HttpURLConnection putConnection(URL url, String oauthtoken) throws IOException
-	{
-	    HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
-	    connection.addRequestProperty("Authorization", "OAuth " + oauthtoken);
-	    connection.setDoOutput(true); 
-	    connection.setDoInput(true);
-	    connection.setInstanceFollowRedirects(false); 
-	    connection.setRequestMethod("PUT");
-	    connection.setRequestProperty("Content-Type", "application/json"); 
-	    connection.setRequestProperty("Accept", "application/json"); 
-	    connection.setRequestProperty("charset", "utf-8");
-	    
-	    return connection;
-	}
-
-	public void saveChannel(Channel c, String channelname, String oauthtoken) throws IOException
-	{
-		String request = getChannelAdress;
-		request = request.replace("<<<username>>>", channelname);
-		
-		URL url = new URL(request); 
-	    
-	    HttpURLConnection connection = putConnection(url, oauthtoken);
-	    
-	    try(BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()))){
-	    	
-	    }
-	    
-	    JSONObject object = new JSONObject();
-	    
-	    JSONObject channelObject = new JSONObject();
-	    channelObject.append("status", c.getStatus());
-	    channelObject.append("game", c.getGame());
-	    channelObject.append("mature", c.isMature());
-	    channelObject.append("broadcaster_language", c.getBroadcasterLanguage());
-	    
-	    object.append("channel", channelObject);
-	    
-	    try(BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()))){
-	    	writer.write(object.toString());
-	    }
-	    
-	    connection.disconnect();
 	}
 }

@@ -6,7 +6,10 @@ import java.io.IOException;
 
 import GUI.OptionPanes.ChannelView;
 import ViewModels.ChannelViewModel;
+import dao.Authentication;
 import dao.DefaultSettingsDAO;
+import exceptions.ChannelAPINotCallableException;
+import exceptions.SettingNotInitializedException;
 import twitchModels.Channel;
 import twitchRestApi.ChannelFunctions;
 
@@ -14,18 +17,26 @@ public class ChannelController implements ActionListener
 {
 	ChannelView view;
 	
-	public ChannelController(ChannelView c) throws ClassNotFoundException, IOException
+	public ChannelController(ChannelView c) throws ClassNotFoundException, IOException, ChannelAPINotCallableException, SettingNotInitializedException
 	{
 		view = c;
 		loadSettings();
 	}
 	
-	public void loadSettings() throws ClassNotFoundException, IOException
+	public void loadSettings() throws ClassNotFoundException, IOException, ChannelAPINotCallableException, SettingNotInitializedException
 	{
 		ChannelFunctions channelfunc = new ChannelFunctions();
-		Channel c = channelfunc.getChannelInformation(DefaultSettingsDAO.getInstance().getSettings().getSetting("channelname").toString());
-		view.fillMask(c);
-		view.setInactive();
+		Object name = DefaultSettingsDAO.getInstance().getSettings().getSetting("channelname");
+		if(name != null)
+		{
+			Channel c = channelfunc.getChannelInformation(name.toString(), Authentication.getMightyAuthenticationHeader());
+			view.fillMask(c);
+			view.setInactive();
+		}
+		else
+		{
+			throw new SettingNotInitializedException("channelname");
+		}
 	}
 	
 	public void actionPerformed(ActionEvent e)
@@ -38,66 +49,55 @@ public class ChannelController implements ActionListener
 				saveChannel();
 				view.setInactive();
 			}
-			catch (ClassNotFoundException | IOException e2)
+			catch (ClassNotFoundException | IOException | ChannelAPINotCallableException | SettingNotInitializedException e2)
 			{
 				e2.printStackTrace();
-			} break;
+				try
+				{
+					loadSettings();
+				}
+				catch (ClassNotFoundException | IOException | ChannelAPINotCallableException
+						| SettingNotInitializedException e1)
+				{
+					e1.printStackTrace();
+				}
+			}
+			break;
 		case "edit": view.setActive(); break;
 		case "abort":
 			try
 			{
 				loadSettings();
 				view.setInactive();
-			} catch (ClassNotFoundException | IOException e1)
+			}
+			catch (ClassNotFoundException | IOException | ChannelAPINotCallableException | SettingNotInitializedException e1)
 			{
 				e1.printStackTrace();
 			} break;
 		}
 	}
 
-	private void saveChannel() throws ClassNotFoundException, IOException
+	private void saveChannel() throws ClassNotFoundException, IOException, ChannelAPINotCallableException, SettingNotInitializedException
 	{
 		ChannelViewModel viewModel = view.getChannelInformation();
 
-		ChannelFunctions channelfunc = new ChannelFunctions();
-		Channel c = channelfunc.getChannelInformation(DefaultSettingsDAO.getInstance().getSettings().getSetting("channelname").toString());
+		Channel c = new Channel();
 		
-		if(viewModel.status != null)
-		{
-			if(viewModel.status == "")
-			{
-				c.setStatus(null);
-			}
-			else
-			{
-				c.setStatus(viewModel.status);
-			}
-		}
-		if(viewModel.game != null)
-		{
-			if(viewModel.game == "")
-			{
-				c.setGame(null);
-			}
-			else
-			{
-				c.setGame(viewModel.game);
-			}
-		}
-		if(viewModel.broadcasterlanguage != null)
-		{
-			if(viewModel.broadcasterlanguage == "")
-			{
-				c.setBroadcasterLanguage(null);
-			}
-			else
-			{
-				c.setBroadcasterLanguage(viewModel.broadcasterlanguage);
-			}
-		}
+		c.setStatus(viewModel.status);
+		c.setGame(viewModel.game);
+		c.setBroadcasterLanguage(viewModel.broadcasterlanguage);
 		c.setMature(viewModel.isMatureContent);
 		
-		channelfunc.saveChannel(c, DefaultSettingsDAO.getInstance().getSettings().getSetting("channelname").toString(), DefaultSettingsDAO.getInstance().getSettings().getSetting("mightyoauthkey").toString());
+		ChannelFunctions channelfunc = new ChannelFunctions();
+		Object name = DefaultSettingsDAO.getInstance().getSettings().getSetting("channelname");
+		if(name != null)
+		{
+			channelfunc.updateChannelInformation(name.toString(), Authentication.getMightyAuthenticationHeader(), c);
+		}
+		else
+		{
+			throw new SettingNotInitializedException("channelname");
+		}
 	}
 
 }
