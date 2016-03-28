@@ -1,6 +1,7 @@
 package models;
 
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 public class ChatMessage
@@ -34,6 +35,6 @@ public class ChatMessage
 	
 	public String getTimestamp()
 	{
-		return time.toString();
+		return new SimpleDateFormat("dd.MM. HH:mm:ss").format(time);
 	}
 }

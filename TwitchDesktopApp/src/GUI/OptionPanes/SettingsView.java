@@ -12,7 +12,6 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
-import GUI.Controllers.SettingsController;
 import models.Settings;
 
 public class SettingsView extends JPanel
@@ -32,16 +31,24 @@ public class SettingsView extends JPanel
 	private JTextField channel;
 	private JButton save;
 	private JButton abort;
+	private JLabel mightykeylabel;
+	private JPasswordField mightykey;
+	private JLabel ircLabel;
+	private JLabel channelSettings;
 	
 	public SettingsView()
 	{
 		JPanel top = new JPanel();
-		top.setLayout(new GridLayout(4, 2));
+		top.setLayout(new GridLayout(8, 2));
 		
 		usernameLabel = new JLabel("Username");
 		oauthLabel = new JLabel("O-Auth Key (with oauth:)");
 		serverLabel = new JLabel("Server and Port");
-		twitchAdressLabel = new JLabel("http://twitch.tv/");
+		twitchAdressLabel = new JLabel("Channelname: http://twitch.tv/");
+		
+		mightykeylabel = new JLabel("Mighty OAuth Key");
+		ircLabel = new JLabel("IRC Settings");
+		channelSettings = new JLabel("General Settings");
 		
 		username = new JTextField();
 		username.setMinimumSize(new Dimension(150, 20));
@@ -49,6 +56,9 @@ public class SettingsView extends JPanel
 		oauthkey = new JPasswordField();
 		oauthkey.setMinimumSize(new Dimension(150, 20));
 		oauthkey.setPreferredSize(new Dimension(150, 20));
+		mightykey = new JPasswordField();
+		mightykey.setMinimumSize(new Dimension(150, 20));
+		mightykey.setPreferredSize(new Dimension(150, 20));
 		server = new JTextField();
 		server.setMinimumSize(new Dimension(100, 20));
 		server.setPreferredSize(new Dimension(100, 20));
@@ -64,19 +74,27 @@ public class SettingsView extends JPanel
 		abort = new JButton("abort");
 		abort.setActionCommand("abort");
 		
-		top.add(usernameLabel, 0);
-		top.add(username, 1);
-		top.add(oauthLabel, 2);
-		top.add(oauthkey, 3);
-		top.add(serverLabel, 4);
+		top.add(ircLabel, 0);
+		top.add(new JLabel(), 1);
+		top.add(usernameLabel, 2);
+		top.add(username, 3);
+		top.add(oauthLabel, 4);
+		top.add(oauthkey, 5);
+		top.add(serverLabel, 6);
 		
 		JPanel forServer = new JPanel(new FlowLayout());
 		forServer.add(server);
 		forServer.add(port);
 		
-		top.add(forServer, 5);
-		top.add(twitchAdressLabel, 6);
-		top.add(channel, 7);
+		top.add(forServer, 7);
+		
+		top.add(channelSettings, 8);
+		top.add(new JPanel(), 9);
+		
+		top.add(twitchAdressLabel, 10);
+		top.add(channel, 11);
+		top.add(mightykeylabel, 12);
+		top.add(mightykey, 13);
 		
 		top.setVisible(true);
 		
@@ -110,6 +128,15 @@ public class SettingsView extends JPanel
 		}
 		return result;
 	}
+	public String getMightyKey()
+	{
+		String result = "";
+		for(char c: mightykey.getPassword())
+		{
+			result = result+c;
+		}
+		return result;
+	}
 	public String getPort()
 	{
 		return port.getText();
@@ -126,6 +153,7 @@ public class SettingsView extends JPanel
 		server.setText(settings.getSetting("server").toString());
 		port.setText(settings.getSetting("port").toString());
 		channel.setText(settings.getSetting("channelname").toString());
+		mightykey.setText(settings.getSetting("mightyoauthkey").toString());
 	}
 
 	public void addActionListenerForButtons(ActionListener listener)

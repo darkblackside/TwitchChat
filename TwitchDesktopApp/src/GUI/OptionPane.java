@@ -21,7 +21,7 @@ public class OptionPane extends JTabbedPane
 	{
 		tabbedComponents = new HashMap<String, JComponent>();
 		this.setMinimumSize(new Dimension(400, 400));
-		this.setPreferredSize(new Dimension(400, 400));
+		this.setPreferredSize(new Dimension(500, 600));
 		this.setVisible(true);
 	}
 	

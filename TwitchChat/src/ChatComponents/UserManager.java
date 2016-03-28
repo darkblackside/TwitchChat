@@ -1,13 +1,39 @@
 package ChatComponents;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.naming.AuthenticationException;
+import javax.xml.crypto.URIReferenceException;
+
+import dao.DefaultSettingsDAO;
+import exceptions.HttpRequestFailed;
+import exceptions.JSONMalformedException;
+import exceptions.ReadNotOpenedException;
+import exceptions.UserNotFoundException;
+import models.Settings;
 import models.User;
+import twitchModels.ChatUser;
+import twitchRestApi.ChatFunctions;
 
 public class UserManager implements Runnable
 {
-	public UserManager(Chat c)
+	private Chat chat;
+	
+	public UserManager(Chat c) throws AuthenticationException, MalformedURLException, ClassNotFoundException, URIReferenceException, IOException, ReadNotOpenedException, JSONMalformedException, UserNotFoundException, HttpRequestFailed
 	{		
-		findNewUsers(true);
+		chat = c;
+		
+		try
+		{
+			findNewUsers(getActualUserList());
+		}
+		catch(JSONMalformedException | HttpRequestFailed e)
+		{
+			e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -15,13 +41,23 @@ public class UserManager implements Runnable
 	{
 		while(true)
 		{
-			findNewUsers(false);
-			
-			findDisconnectedUsers();
+			try
+			{
+				List<ChatUser> chatUsers = getActualUserList();
+				
+				findNewUsers(chatUsers);
+				
+				findDisconnectedUsers(chatUsers);
+			}
+			catch (AuthenticationException | ClassNotFoundException | URIReferenceException | IOException
+					| ReadNotOpenedException | JSONMalformedException | UserNotFoundException | HttpRequestFailed e1)
+			{
+				e1.printStackTrace();
+			}
 			
 			try
 			{
-				Thread.sleep(10000);
+				Thread.sleep(30000);
 			}
 			catch (InterruptedException e)
 			{
@@ -29,25 +65,60 @@ public class UserManager implements Runnable
 		}
 	}
 
-	private void findDisconnectedUsers()
+	private void findDisconnectedUsers(List<ChatUser> actualChatUsers)
 	{
+		for(User user:chat.getUsersList())
+		{
+			if(user.isOnline())
+			{
+				boolean found = false;
+				for(ChatUser actualChatUser:actualChatUsers)
+				{
+					if(user.getUsername().equals(actualChatUser.username))
+					{
+						found = true;
+					}
+				}
+				
+				if(!found)
+				{
+					user.setOffline();
+				}
+			}
+		}
 	}
 
-	private void findNewUsers(boolean firstConnect) 
+	private void findNewUsers(List<ChatUser> actualChatUsers) throws FileNotFoundException, IOException, UserNotFoundException 
 	{
+		for(ChatUser actualChatUser:actualChatUsers)
+		{
+			if(!chat.isUserExistent(actualChatUser.username))
+			{
+				User user = new User(actualChatUser.username);
+				user.setUserState(actualChatUser.state);
+				chat.addUserIfNotExists(user);
+			}
+			
+			User found = chat.findUserByUsername(actualChatUser.username);
+			
+			if(found != null)
+			{
+				if(!found.isOnline())
+				{
+					found.setOnline();
+					chat.userJoined(found);
+				}
+			}
+			else
+			{
+				throw new UserNotFoundException();
+			}
+		}
 	}
 	
-	@SuppressWarnings("unused")
-	private List<User> getUserList()
+	private List<ChatUser> getActualUserList() throws AuthenticationException, MalformedURLException, ClassNotFoundException, URIReferenceException, IOException, ReadNotOpenedException, JSONMalformedException, HttpRequestFailed
 	{
-		List<User> users = new ArrayList<User>();
-		/*try {
-			HttpResponse<JsonNode> jsonResponse = Unirest.get("http://tmi.twitch.tv/group/user/" + SettingsBuilder.getSettings().getSetting("channelname").toString() + "/chatters")
-					  .asJson();
-		} catch (UnirestException | SettingsNotInitializedException e)
-		{
-			e.printStackTrace();
-		}*/
+		List<ChatUser> users = ChatFunctions.getOnlineUsers(DefaultSettingsDAO.getInstance().getSettings().getSetting("channelname").toString());
 		
 		return users;
 	}

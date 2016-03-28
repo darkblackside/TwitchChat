@@ -5,6 +5,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -12,39 +13,54 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.naming.AuthenticationException;
-import javax.net.ssl.HttpsURLConnection;
 import javax.xml.crypto.URIReferenceException;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import exceptions.HttpRequestFailed;
+import exceptions.JSONMalformedException;
 import exceptions.ReadNotOpenedException;
 import exceptions.WriteNotOpenedException;
 
 public class APIConnection
 {	
-	public static JSONObject getConnection(String url, Map<String, String> headerValues) throws URIReferenceException, AuthenticationException, MalformedURLException, IOException, JSONException, ReadNotOpenedException
+	public static JSONObject getConnection(String url, Map<String, String> headerValues) throws URIReferenceException, AuthenticationException, MalformedURLException, IOException, ReadNotOpenedException, HttpRequestFailed, JSONMalformedException
 	{
-		URLConnection c = makeConnection(makeURL(url), HTTPRequestMethod.GET, headerValues);
-		return new JSONObject(getContents(c));
+		HttpURLConnection c = makeConnection(makeURL(url), HTTPRequestMethod.GET, headerValues);
+		try
+		{
+			return new JSONObject(getContents(c));
+		}
+		catch(JSONException e)
+		{
+			throw new JSONMalformedException(e.getMessage());
+		}
 	}
 	
-	public static JSONObject putConnection(String url, Map<String, String> headerValues, JSONObject write) throws URIReferenceException, AuthenticationException, IOException, WriteNotOpenedException, JSONException, ReadNotOpenedException
+	public static JSONObject putConnection(String url, Map<String, String> headerValues, JSONObject write) throws URIReferenceException, AuthenticationException, IOException, WriteNotOpenedException, JSONException, ReadNotOpenedException, HttpRequestFailed, JSONMalformedException
 	{
-		URLConnection c = makeConnection(makeURL(url), HTTPRequestMethod.GET, headerValues);
+		HttpURLConnection c = makeConnection(makeURL(url), HTTPRequestMethod.PUT, headerValues);
 		writeContents(c, write.toString());
-		return new JSONObject(getContents(c));
+		try
+		{
+			return new JSONObject(getContents(c));
+		}
+		catch(JSONException e)
+		{
+			throw new JSONMalformedException(e.getMessage());
+		}
 	}
 	
 	public static JSONObject deleteConnection(String url, Map<String, String> headerValues, JSONObject deleted) throws URIReferenceException, AuthenticationException
 	{
-		//Method Dummy
+		//TODO Method Dummy
 		return new JSONObject();
 	}
 	
 	public static JSONObject postConnection(String url, Map<String, String> headerValues, JSONObject write) throws URIReferenceException, AuthenticationException
 	{
-		//Method Dummy
+		//TODO Method Dummy
 		return new JSONObject();
 	}
 	
@@ -53,9 +69,9 @@ public class APIConnection
 		return new URL(request);
 	}
 	
-	private static URLConnection makeConnection(URL request, HTTPRequestMethod method, Map<String, String> headers) throws IOException
+	private static HttpURLConnection makeConnection(URL request, HTTPRequestMethod method, Map<String, String> headers) throws IOException
 	{
-		HttpsURLConnection connection = (HttpsURLConnection) request.openConnection(); 
+		HttpURLConnection connection = (HttpURLConnection) request.openConnection(); 
 		
 	    connection.setDoOutput(true); 
 	    if(method == HTTPRequestMethod.POST || method == HTTPRequestMethod.PUT || method == HTTPRequestMethod.DELETE)
@@ -89,19 +105,26 @@ public class APIConnection
 		}
 	}
 	
-	private static String getContents(URLConnection c) throws IOException, ReadNotOpenedException
+	private static String getContents(HttpURLConnection c) throws IOException, ReadNotOpenedException, HttpRequestFailed
 	{
-		String buffer = "";
-		
-		try(BufferedReader r = getBufferedReader(c))
+		if(c.getResponseCode() <= 299)
 		{
-			while(r.ready())
+			String buffer = "";
+			
+			try(BufferedReader r = getBufferedReader(c))
 			{
-				buffer = buffer + r.readLine();
+				while(r.ready())
+				{
+					buffer = buffer + r.readLine();
+				}
 			}
+			
+			return buffer;
 		}
-		
-		return buffer;
+		else
+		{
+			throw new HttpRequestFailed(c.getResponseCode()+"");
+		}
 	}
 	
 	private static BufferedWriter getBufferedWriter(URLConnection c) throws IOException, WriteNotOpenedException

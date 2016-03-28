@@ -1,6 +1,5 @@
 /dao/
 /exceptions/
 /models/
-/twitchRestApi/
 /twitchModels/
-/NullablePrimitives/
+/twitchRestApi/

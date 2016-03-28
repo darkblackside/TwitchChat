@@ -2,6 +2,7 @@ package models;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Map;
 
 public class User implements Serializable
 {
@@ -11,18 +12,28 @@ public class User implements Serializable
 	private static final long serialVersionUID = 7451244106156367916L;
 	private String nickname;
 	private Date created;
+	private transient Date visitedThisTime;
 	private transient boolean visitedThisSession = false;
 	private int timesVisited = 0;
 	private int timesWritten = 0;
-	private transient boolean online = false;
 	private long onlinetime = 0;
-	private Date onlineSince;
+	private Map<String, Object> gameStats;
+	private UserState userState;
 	
 	public User(String username)
 	{
 		nickname = username;
 		created = new Date();
-		onlineSince = null;
+	}
+	
+	public void addOrUpdateGameStat(String key, Object value)
+	{
+		gameStats.put(key, value);
+	}
+	
+	public Object getGameStat(String key)
+	{
+		return gameStats.get(key);
 	}
 	
 	public String getUsername()
@@ -47,7 +58,7 @@ public class User implements Serializable
 	
 	public void visitedThisSession()
 	{
-		if(!visitedThisSession)
+		if(visitedThisSession == false)
 		{
 			addOneTimeVisited();
 		}
@@ -59,14 +70,26 @@ public class User implements Serializable
 		timesVisited++;
 	}
 	
-	private void setOnline()
+	public void setOnline()
 	{
-		online = true;
+		if(visitedThisTime != null)
+		{
+			onlinetime = onlinetime +  (new Date().getTime() - visitedThisTime.getTime());
+		}
+		
+		visitedThisSession();
+		
+		visitedThisTime = new Date();
 	}
 	
-	private void setOffline()
+	public void setOffline()
 	{
-		online = false;
+		if(visitedThisTime != null)
+		{
+			onlinetime = onlinetime +  (new Date().getTime() - visitedThisTime.getTime());
+		}
+		
+		visitedThisTime = null;
 	}
 	
 	public int getTimesVisited()
@@ -88,6 +111,14 @@ public class User implements Serializable
 	
 	public boolean isOnline()
 	{
-		return online;
+		return visitedThisTime != null;
+	}
+
+	public UserState getUserState() {
+		return userState;
+	}
+
+	public void setUserState(UserState userState) {
+		this.userState = userState;
 	}
 }

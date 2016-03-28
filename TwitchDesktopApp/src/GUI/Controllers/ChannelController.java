@@ -9,6 +9,7 @@ import ViewModels.ChannelViewModel;
 import dao.Authentication;
 import dao.DefaultSettingsDAO;
 import exceptions.ChannelAPINotCallableException;
+import exceptions.HttpRequestFailed;
 import exceptions.SettingNotInitializedException;
 import twitchModels.Channel;
 import twitchRestApi.ChannelFunctions;
@@ -49,7 +50,7 @@ public class ChannelController implements ActionListener
 				saveChannel();
 				view.setInactive();
 			}
-			catch (ClassNotFoundException | IOException | ChannelAPINotCallableException | SettingNotInitializedException e2)
+			catch (ClassNotFoundException | IOException | ChannelAPINotCallableException | SettingNotInitializedException | HttpRequestFailed e2)
 			{
 				e2.printStackTrace();
 				try
@@ -77,7 +78,7 @@ public class ChannelController implements ActionListener
 		}
 	}
 
-	private void saveChannel() throws ClassNotFoundException, IOException, ChannelAPINotCallableException, SettingNotInitializedException
+	private void saveChannel() throws ClassNotFoundException, IOException, ChannelAPINotCallableException, SettingNotInitializedException, HttpRequestFailed
 	{
 		ChannelViewModel viewModel = view.getChannelInformation();
 
@@ -87,6 +88,7 @@ public class ChannelController implements ActionListener
 		c.setGame(viewModel.game);
 		c.setBroadcasterLanguage(viewModel.broadcasterlanguage);
 		c.setMature(viewModel.isMatureContent);
+		c.setDelay(viewModel.delay);
 		
 		ChannelFunctions channelfunc = new ChannelFunctions();
 		Object name = DefaultSettingsDAO.getInstance().getSettings().getSetting("channelname");

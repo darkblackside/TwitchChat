@@ -3,6 +3,7 @@ package GUI;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.event.ActionListener;
 import java.util.List;
 
@@ -50,6 +51,9 @@ public class ChatView extends JPanel
 		
 		chatArea = new JTextArea();
 		chatArea.setEditable(false);
+		chatArea.setFont(new Font("Serif", Font.ITALIC, 16));
+		chatArea.setLineWrap(true);
+		chatArea.setWrapStyleWord(true);
 		DefaultCaret caret = (DefaultCaret)chatArea.getCaret();
 		caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
 		
@@ -71,7 +75,7 @@ public class ChatView extends JPanel
 		top.setVisible(true);
 
 		this.setMinimumSize(new Dimension(200, 400));
-		this.setPreferredSize(new Dimension(200, 400));
+		this.setPreferredSize(new Dimension(300, 600));
 		this.setLayout(new BorderLayout());
 		
 		this.add(chatScrollPane, BorderLayout.CENTER);
@@ -87,7 +91,7 @@ public class ChatView extends JPanel
 	}
 	public void addChatLine(ChatMessage message)
 	{
-		chatArea.setText(chatArea.getText() + "[" + message.getTimestamp() + "]<" + message.getUsername() + ">" + message.getMessage() + "\r\n");
+		chatArea.setText(chatArea.getText() + "[" + message.getTimestamp() + "] <" + message.getUsername() + ">:\r\n" + message.getMessage() + "\r\n");
 	}
 
 	public void updateUsers(List<User> userList)

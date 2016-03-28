@@ -4,12 +4,19 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.naming.AuthenticationException;
+import javax.xml.crypto.URIReferenceException;
+
 import org.jibble.pircbot.PircBot;
 
 import dao.DefaultSettingsDAO;
 import dao.DefaultUserDAO;
 import exceptions.ConnectionException;
+import exceptions.HttpRequestFailed;
+import exceptions.JSONMalformedException;
 import exceptions.NoSettingsException;
+import exceptions.ReadNotOpenedException;
 import exceptions.SettingsNotInitializedException;
 import exceptions.UserNotFoundException;
 import models.ChatMessage;
@@ -37,7 +44,7 @@ public class Chat extends PircBot implements IBroadcastListener, ISettingsChange
 	
 	private List<ChatMessage> messages;
 	
-	public Chat() throws ClassNotFoundException, IOException, NoSettingsException, SettingsNotInitializedException, ConnectionException
+	public Chat() throws ClassNotFoundException, IOException, NoSettingsException, SettingsNotInitializedException, ConnectionException, AuthenticationException, URIReferenceException, ReadNotOpenedException, JSONMalformedException, UserNotFoundException, HttpRequestFailed
 	{
 		users = new ArrayList<models.User>();
 		
@@ -83,7 +90,7 @@ public class Chat extends PircBot implements IBroadcastListener, ISettingsChange
 				this.connect(server, port, authkey);
 			} catch (Exception e) {
 				e.printStackTrace();
-				throw new ConnectionException("Could not connect to server " + settings.getSetting("server").toString() + ":"+settings.getSetting("port").toString()+", Username "+settings.getSetting("botname").toString());
+				throw new ConnectionException("Could not connect to server " + settings.getSetting("server").toString() + ":"+settings.getSetting("port").toString()+", Username "+settings.getSetting("botname").toString() + ". Please restart application");
 			}
 			channelname = settings.getSetting("channelname").toString();
 			channel = "#"+channelname;
@@ -136,7 +143,7 @@ public class Chat extends PircBot implements IBroadcastListener, ISettingsChange
 	    }
 	}
 	
-	private User findUserByUsername(String username) throws UserNotFoundException
+	User findUserByUsername(String username) throws UserNotFoundException
 	{
 		synchronized (userlistlock)
 		{
@@ -166,17 +173,17 @@ public class Chat extends PircBot implements IBroadcastListener, ISettingsChange
 		}
 	}
 	
-	private void addUserIfNotExists(String sender) throws FileNotFoundException, IOException
+	public void addUserIfNotExists(String sender) throws FileNotFoundException, IOException
 	{
-		if(!isUserExistent(sender))
+		User u = new User(sender);
+		this.addUserIfNotExists(u);
+	}
+	public void addUserIfNotExists(User user) throws FileNotFoundException, IOException
+	{
+		if(!isUserExistent(user.getUsername()))
 		{
-			synchronized (userlistlock)
-			{
-				User u = new User(sender);
-				this.addUser(u);
-				this.userJoined(u);
-				saveUsers();
-			}
+			this.addUser(user);
+			this.userJoined(user);
 		}
 	}
 
@@ -191,7 +198,7 @@ public class Chat extends PircBot implements IBroadcastListener, ISettingsChange
 		return channelname;
 	}
 	
-	public void addUser(User u) throws FileNotFoundException, IOException
+	private void addUser(User u) throws FileNotFoundException, IOException
 	{
 		synchronized (userlistlock) {
 			users.add(u);
@@ -210,7 +217,7 @@ public class Chat extends PircBot implements IBroadcastListener, ISettingsChange
 		return users.get(i);
 	}
 	
-	private boolean isUserExistent(String username)
+	boolean isUserExistent(String username)
 	{
 		synchronized (userlistlock)
 		{
@@ -230,10 +237,7 @@ public class Chat extends PircBot implements IBroadcastListener, ISettingsChange
 	{
 		usersUpdated(users);
 		
-		synchronized (userlistlock)
-		{
-			new DefaultUserDAO().saveUsers(users, path);
-		}
+		new DefaultUserDAO().saveUsers(users, path);
 	}
 
 	public List<User> getUsersList()

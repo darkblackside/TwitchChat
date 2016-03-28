@@ -13,7 +13,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 
-import GUI.Controllers.ChannelController;
 import ViewModels.ChannelViewModel;
 import twitchModels.Channel;
 
@@ -37,6 +36,8 @@ public class ChannelView extends JPanel
 	private JLabel views;
 	private JLabel followersLabel;
 	private JLabel followers;
+	private JLabel delayLabel;
+	private JTextField delay;
 	private JCheckBox matureAudience;
 	private JLabel matureAudienceLabel;
 	private JButton edit;
@@ -44,6 +45,7 @@ public class ChannelView extends JPanel
 	
 	public ChannelView()
 	{
+		//TODO resize/change so that it looks pretty
 		status = new JTextField("");
 		statusLabel = new JLabel("Status: ");
 		
@@ -71,6 +73,10 @@ public class ChannelView extends JPanel
 		matureAudience = new JCheckBox();
 		matureAudience.setEnabled(false);
 		
+		delay = new JTextField();
+		delay.setEditable(false);
+		delayLabel = new JLabel("Delay");
+		
 		edit = new JButton("edit");
 		edit.setActionCommand("edit");
 		abort = new JButton("abort");
@@ -83,11 +89,11 @@ public class ChannelView extends JPanel
 		top.add(displayName);
 
 		top.setMinimumSize(new Dimension(380, 20));
-		top.setPreferredSize(new Dimension(380, 20));
+		top.setPreferredSize(new Dimension(480, 20));
 		top.setVisible(true);
 		
 		JPanel middle = new JPanel();
-		middle.setLayout(new GridLayout(5, 2));
+		middle.setLayout(new GridLayout(6, 2));
 		
 		middle.add(matureAudienceLabel, 0);
 		middle.add(matureAudience, 1);
@@ -95,17 +101,20 @@ public class ChannelView extends JPanel
 		middle.add(statusLabel, 2);
 		middle.add(status, 3);
 		
-		middle.add(broadcasterLanguageLabel, 4);
-		middle.add(broadcasterLanguage, 5);
+		middle.add(gameLabel, 4);
+		middle.add(game, 5);
 		
-		middle.add(gameLabel, 6);
-		middle.add(game, 7);
+		middle.add(delayLabel, 6);
+		middle.add(delay, 7);
+
+		middle.add(broadcasterLanguageLabel, 8);
+		middle.add(broadcasterLanguage, 9);
 		
-		middle.add(partnerLabel, 8);
-		middle.add(partner, 9);
+		middle.add(partnerLabel, 10);
+		middle.add(partner, 11);
 
 		middle.setMinimumSize(new Dimension(380, 340));
-		middle.setPreferredSize(new Dimension(380, 340));
+		middle.setPreferredSize(new Dimension(480, 340));
 		middle.setVisible(true);
 		
 		JPanel bottom = new JPanel();
@@ -119,24 +128,23 @@ public class ChannelView extends JPanel
 		bottom.add(abort);
 
 		bottom.setMinimumSize(new Dimension(380, 40));
-		bottom.setPreferredSize(new Dimension(380, 40));
+		bottom.setPreferredSize(new Dimension(480, 40));
 		bottom.setVisible(true);
 		
 		
-		JPanel scrollPanel = new JPanel();
-		scrollPanel.setLayout(new BorderLayout());
-		scrollPanel.add(top, BorderLayout.NORTH);
-		scrollPanel.add(middle, BorderLayout.CENTER);
-		scrollPanel.add(bottom, BorderLayout.SOUTH);
-		scrollPanel.setMinimumSize(new Dimension(380, 400));
-		scrollPanel.setPreferredSize(new Dimension(380, 400));
-		scrollPanel.setMaximumSize(new Dimension(380, 400));
-		scrollPanel.setVisible(true);
+		JPanel scrolledPanel = new JPanel();
+		scrolledPanel.setLayout(new BorderLayout());
+		scrolledPanel.add(top, BorderLayout.NORTH);
+		scrolledPanel.add(middle, BorderLayout.CENTER);
+		scrolledPanel.add(bottom, BorderLayout.SOUTH);
+		scrolledPanel.setVisible(true);
+		scrolledPanel.setMinimumSize(new Dimension(380, 400));
+		scrolledPanel.setPreferredSize(new Dimension(460, 560));
 		
-		JScrollPane scrollPane = new JScrollPane(scrollPanel);
+		JScrollPane scrollPane = new JScrollPane(scrolledPanel);
 		scrollPane.setMinimumSize(new Dimension(380, 380));
-		scrollPane.setPreferredSize(new Dimension(380, 380));
-		scrollPane.setMaximumSize(new Dimension(380, 380));
+		scrollPane.setPreferredSize(new Dimension(500, 580));
+		scrollPane.setMaximumSize(new Dimension(500, 580));
 		scrollPane.setVisible(true);
 		
 		this.add(scrollPane, BorderLayout.CENTER);
@@ -150,6 +158,8 @@ public class ChannelView extends JPanel
 		displayName.setText(c.getName());
 		game.setText(c.getGame());
 		language.setText(c.getLanguage());
+		views.setText(c.getViews().toString() + "");
+		followers.setText(c.getFollowers() + "");
 		if(c.isPartner() == null)
 		{
 			partner.setSelected(false);
@@ -171,11 +181,17 @@ public class ChannelView extends JPanel
 	public void setActive()
 	{
 		status.setEditable(true);
-		broadcasterLanguage.setEditable(true);
-		matureAudience.setEnabled(true);
 		game.setEditable(true);
 		abort.setEnabled(true);
 		edit.setText("save");
+		//matureAudience.setEnabled(true); -- Isn't supported by API, return value of put call is wrong
+		broadcasterLanguage.setEditable(true);
+		
+		if(partner.isSelected())
+		{
+			delay.setEditable(true);
+		}
+		
 		edit.setActionCommand("save");
 	}
 	
@@ -186,6 +202,7 @@ public class ChannelView extends JPanel
 		matureAudience.setEnabled(false);
 		game.setEditable(false);
 		abort.setEnabled(false);
+		delay.setEditable(false);
 		edit.setText("edit");
 		edit.setActionCommand("edit");
 	}
@@ -208,6 +225,10 @@ public class ChannelView extends JPanel
 		viewModel.broadcasterlanguage = broadcasterLanguage.getText();
 		viewModel.game = game.getText();
 		viewModel.isMatureContent = matureAudience.isSelected();
+		if(delay.getText() != null && !delay.getText().equals(""))
+		{
+			viewModel.delay = Integer.parseInt(delay.getText());	
+		}
 		
 		return viewModel;
 	}

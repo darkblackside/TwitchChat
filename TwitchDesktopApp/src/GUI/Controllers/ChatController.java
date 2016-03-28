@@ -34,15 +34,17 @@ public class ChatController implements IChatListener, ActionListener
 	}
 
 	@Override
-	public void UserJoined(User user) {
-		// TODO Auto-generated method stub
-		
+	public void UserJoined(User user)
+	{
+		ChatMessage cm = new ChatMessage(user, "User " + user.getUsername() + " joined");
+		view.addChatLine(cm);
 	}
 
 	@Override
-	public void UserDisconnected(User user) {
-		// TODO Auto-generated method stub
-		
+	public void UserDisconnected(User user)
+	{
+		ChatMessage cm = new ChatMessage(user, "User " + user.getUsername() + " disconnected");
+		view.addChatLine(cm);
 	}
 
 	@Override

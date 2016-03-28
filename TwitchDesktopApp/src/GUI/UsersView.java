@@ -27,8 +27,8 @@ public class UsersView extends JFrame
 		userslist.setPreferredSize(new Dimension(200, 600));
 		userslist.setMinimumSize(new Dimension(200, 600));
 		scrollpane = new JScrollPane(userslist);
-		scrollpane.setPreferredSize(new Dimension(200, 600));
-		scrollpane.setMinimumSize(new Dimension(200, 600));
+		scrollpane.setPreferredSize(new Dimension(200, 400));
+		scrollpane.setMinimumSize(new Dimension(200, 400));
 		scrollpane.setVisible(true);
 		
 		updateUsersList(users);

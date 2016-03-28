@@ -5,10 +5,12 @@ import java.awt.HeadlessException;
 import java.io.IOException;
 import java.net.URL;
 
+import javax.naming.AuthenticationException;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
+import javax.xml.crypto.URIReferenceException;
 
 import ChatComponents.Chat;
 import GUI.Controllers.ChannelController;
@@ -20,9 +22,13 @@ import dao.DefaultSettingsDAO;
 import exceptions.AuthTokenNotFoundException;
 import exceptions.ChannelAPINotCallableException;
 import exceptions.ConnectionException;
+import exceptions.HttpRequestFailed;
+import exceptions.JSONMalformedException;
 import exceptions.NoSettingsException;
+import exceptions.ReadNotOpenedException;
 import exceptions.SettingNotInitializedException;
 import exceptions.SettingsNotInitializedException;
+import exceptions.UserNotFoundException;
 import models.Settings;
 import twitchRestApi.APIKeyConnection;
 
@@ -35,7 +41,7 @@ public class Mainframe extends JFrame
 	private OptionPane tabbedpane;
 	private Chat c;
 	
-	public Mainframe() throws SettingsNotInitializedException, ClassNotFoundException, IOException, HeadlessException, AuthTokenNotFoundException
+	public Mainframe() throws SettingsNotInitializedException, ClassNotFoundException, IOException, HeadlessException, AuthTokenNotFoundException, AuthenticationException, URIReferenceException, ReadNotOpenedException, JSONMalformedException, UserNotFoundException, HttpRequestFailed
 	{
 		//Initializing settings, views and controllers
 		initializeSettings();
@@ -68,15 +74,15 @@ public class Mainframe extends JFrame
 	{
 		tabbedpane = new OptionPane();
 		
-		SettingsView settings = new SettingsView();
-		SettingsController settingscontroller = new SettingsController(settings);
-		tabbedpane.addTabbedComponent("Settings", settings);
-		settings.addActionListenerForButtons(settingscontroller);
-		
 		ChannelView channel = new ChannelView();
 		ChannelController channelcontroller = new ChannelController(channel);
 		tabbedpane.addTabbedComponent("Channel", channel);
 		channel.addActionListenerForButtons(channelcontroller);
+		
+		SettingsView settings = new SettingsView();
+		SettingsController settingscontroller = new SettingsController(settings);
+		tabbedpane.addTabbedComponent("Settings", settings);
+		settings.addActionListenerForButtons(settingscontroller);
 		
 		this.setLayout(new FlowLayout());
 		ChatView chView = new ChatView();

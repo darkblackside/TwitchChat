@@ -32,6 +32,7 @@ public class SettingsController implements ActionListener
 			settings.updateSetting("port", settingsview.getPort());
 			settings.updateSetting("channelname", settingsview.getChannelname());
 			settings.updateSetting("oauthkey", settingsview.getOAuthKey());
+			settings.updateSetting("mightyoauthkey", settingsview.getMightyKey());
 			
 			switch(arg0.getActionCommand())
 			{

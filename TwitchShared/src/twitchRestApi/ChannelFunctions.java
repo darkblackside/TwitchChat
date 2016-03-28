@@ -1,26 +1,19 @@
 package twitchRestApi;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.sql.Connection;
 import java.util.Date;
 import java.util.Map;
 
 import javax.naming.AuthenticationException;
-import javax.net.ssl.HttpsURLConnection;
 import javax.xml.crypto.URIReferenceException;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import exceptions.ChannelAPINotCallableException;
+import exceptions.HttpRequestFailed;
+import exceptions.JSONMalformedException;
 import exceptions.ReadNotOpenedException;
 import exceptions.WriteNotOpenedException;
 import twitchModels.Channel;
@@ -29,12 +22,12 @@ public class ChannelFunctions
 {
 	public static final String getChannelAdress = "https://api.twitch.tv/kraken/channels/<<<username>>>";
 	
-	private JSONObject getGetRequest(String requestDestination, Map<String, String> headerValues) throws AuthenticationException, MalformedURLException, JSONException, URIReferenceException, IOException, ReadNotOpenedException
+	private JSONObject getGetRequest(String requestDestination, Map<String, String> headerValues) throws AuthenticationException, MalformedURLException, JSONException, URIReferenceException, IOException, ReadNotOpenedException, HttpRequestFailed, JSONMalformedException
 	{		
 		return APIConnection.getConnection(requestDestination, headerValues);
 	}
 	
-	private JSONObject getPutRequest(String requestDestination, Map<String, String> headerValues, JSONObject toWrite) throws AuthenticationException, JSONException, URIReferenceException, IOException, WriteNotOpenedException, ReadNotOpenedException
+	private JSONObject getPutRequest(String requestDestination, Map<String, String> headerValues, JSONObject toWrite) throws AuthenticationException, JSONException, URIReferenceException, IOException, WriteNotOpenedException, ReadNotOpenedException, HttpRequestFailed, JSONMalformedException
 	{
 		return APIConnection.putConnection(requestDestination, headerValues, toWrite);
 	}
@@ -62,53 +55,36 @@ public class ChannelFunctions
 	    return result;
 	}
 	
-	public Channel updateChannelInformation(String channelname, Map<String, String> headers, Channel c) throws ChannelAPINotCallableException
+	public Channel updateChannelInformation(String channelname, Map<String, String> headers, Channel c) throws ChannelAPINotCallableException, HttpRequestFailed
 	{
 		JSONObject toWrite = new JSONObject();
 	    JSONObject channelObject = new JSONObject();
 	    
-	    if(c.isMature() != null)
-	    {
-		    channelObject.append("mature", c.isMature());
-	    }
 	    if(c.getStatus() != null)
 	    {
-		    channelObject.append("status", c.getStatus());
+		    channelObject.put("status", c.getStatus());
 	    }
 	    if(c.getGame() != null)
 	    {
-		    channelObject.append("game", c.getGame());
+		    channelObject.put("game", c.getGame());
 	    }
 	    if(c.getBroadcasterLanguage() != null)
 	    {
-		    channelObject.append("broadcaster_language", c.getBroadcasterLanguage());
+		    channelObject.put("broadcaster_language", c.getBroadcasterLanguage());
 	    }
-	    if(c.getLanguage() != null)
+	    if(c.isMature() != null)
 	    {
-		    channelObject.append("language", c.getLanguage());
+		    channelObject.put("mature", c.isMature());
 	    }
-	    if(c.getVideoBanner() != null)
+	    if(c.getDelay() != null)
 	    {
-		    channelObject.append("video_banner", c.getVideoBanner());
-	    }
-	    if(c.getProfileBanner() != null)
-	    {
-		    channelObject.append("profile_banner", c.getProfileBanner());
-	    }
-	    if(c.getBackground() != null)
-	    {
-		    channelObject.append("background", c.getBackground());
-	    }
-	    if(c.getBanner() != null)
-	    {
-		    channelObject.append("banner", c.getBanner());
-	    }
-	    if(c.getProfileBannerBackgroundColor() != null)
-	    {
-		    channelObject.append("profile_banner_background_color", c.getProfileBannerBackgroundColor());
+	    	if(c.isPartner())
+	    	{
+		    	channelObject.put("delay", c.getDelay());
+	    	}
 	    }
 	    
-	    toWrite.append("channel", channelObject);
+	    toWrite.put("channel", channelObject);
 	    
 		String request = getChannelAdress;
 		request = request.replace("<<<username>>>", channelname);
@@ -118,7 +94,7 @@ public class ChannelFunctions
 			return jsonObjectToChannel(getPutRequest(request, headers, toWrite));
 		}
 	    catch (AuthenticationException | JSONException | URIReferenceException | IOException | WriteNotOpenedException
-				| ReadNotOpenedException e)
+				| ReadNotOpenedException | JSONMalformedException e)
 	    {
 			e.printStackTrace();
 			throw new ChannelAPINotCallableException();
@@ -169,6 +145,14 @@ public class ChannelFunctions
 		else
 		{
 			result.setLanguage(null);
+		}
+		if(!json.get("broadcaster_language").toString().equals("null"))
+		{
+		    result.setBroadcasterLanguage(json.getString("broadcaster_language"));
+		}
+		else
+		{
+			result.setBroadcasterLanguage(null);
 		}
 		if(!json.get("name").toString().equals("null"))
 		{
