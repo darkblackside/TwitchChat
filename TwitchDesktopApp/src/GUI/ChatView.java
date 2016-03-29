@@ -74,13 +74,12 @@ public class ChatView extends JPanel
 		top.add(openUserlist);
 		top.setVisible(true);
 
-		this.setMinimumSize(new Dimension(200, 400));
-		this.setPreferredSize(new Dimension(300, 600));
 		this.setLayout(new BorderLayout());
 		
 		this.add(chatScrollPane, BorderLayout.CENTER);
 		this.add(bottom, BorderLayout.SOUTH);
 		this.add(top, BorderLayout.NORTH);
+		this.setPreferredSize(new Dimension(300, 600));
 		
 		this.setVisible(true);
 	}

@@ -2,6 +2,7 @@ package models;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 public class User implements Serializable
@@ -9,7 +10,7 @@ public class User implements Serializable
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 7451244106156367916L;
+	private static final long serialVersionUID = 7451344106156367916L;
 	private String nickname;
 	private Date created;
 	private transient Date visitedThisTime;
@@ -24,11 +25,17 @@ public class User implements Serializable
 	{
 		nickname = username;
 		created = new Date();
+		gameStats = new HashMap<String, Object>();
 	}
 	
 	public void addOrUpdateGameStat(String key, Object value)
 	{
 		gameStats.put(key, value);
+	}
+	
+	public boolean isGameStatExistent(String key)
+	{
+		return gameStats.containsKey(key);
 	}
 	
 	public Object getGameStat(String key)
@@ -120,5 +127,10 @@ public class User implements Serializable
 
 	public void setUserState(UserState userState) {
 		this.userState = userState;
+	}
+	
+	public long getOnlineTime()
+	{
+		return onlinetime;
 	}
 }

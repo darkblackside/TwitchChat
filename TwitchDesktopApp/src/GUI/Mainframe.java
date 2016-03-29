@@ -1,30 +1,27 @@
 package GUI;
-import java.awt.Dimension;
+import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.HeadlessException;
 import java.io.IOException;
-import java.net.URL;
 
 import javax.naming.AuthenticationException;
-import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
 import javax.xml.crypto.URIReferenceException;
 
 import ChatComponents.Chat;
 import GUI.Controllers.ChannelController;
 import GUI.Controllers.ChatController;
 import GUI.Controllers.SettingsController;
+import GUI.Controllers.Games.OnlineTimeGameController;
 import GUI.OptionPanes.ChannelView;
 import GUI.OptionPanes.SettingsView;
+import GUI.OptionPanes.Games.OnlineTimeGameView;
 import dao.DefaultSettingsDAO;
 import exceptions.AuthTokenNotFoundException;
 import exceptions.ChannelAPINotCallableException;
-import exceptions.ConnectionException;
 import exceptions.HttpRequestFailed;
 import exceptions.JSONMalformedException;
-import exceptions.NoSettingsException;
 import exceptions.ReadNotOpenedException;
 import exceptions.SettingNotInitializedException;
 import exceptions.SettingsNotInitializedException;
@@ -47,8 +44,7 @@ public class Mainframe extends JFrame
 		initializeSettings();
 		try {
 			c = new Chat();
-		} catch (ClassNotFoundException | IOException | NoSettingsException | SettingsNotInitializedException
-				| ConnectionException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			showError("Error while connecting to Server");
 			if(JOptionPane.showConfirmDialog(this, "Do you want to reconfigure the system?") == JOptionPane.YES_OPTION)
@@ -84,14 +80,20 @@ public class Mainframe extends JFrame
 		tabbedpane.addTabbedComponent("Settings", settings);
 		settings.addActionListenerForButtons(settingscontroller);
 		
+		OnlineTimeGameView onlineTimeGame = new OnlineTimeGameView();
+		OnlineTimeGameController onlineTimeGameController = new OnlineTimeGameController(onlineTimeGame, c);
+		tabbedpane.addTabbedComponent("onlineTimeGame", onlineTimeGame);
+		
 		this.setLayout(new FlowLayout());
 		ChatView chView = new ChatView();
-		this.add(chView);
 		ChatController chController = new ChatController(chView, c.getUsersList());
 		c.addListener(chController);
 		chView.addListenerForButtons(chController);
 		chController.addBroadcastListener(c);
-		this.add(tabbedpane);
+		
+		this.setLayout(new BorderLayout());
+		this.add(chView, BorderLayout.WEST);
+		this.add(tabbedpane, BorderLayout.CENTER);
 		this.pack();
 		this.setVisible(true);
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
