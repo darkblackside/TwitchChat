@@ -7,6 +7,7 @@ import java.util.Map;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 
 public class OptionPane extends JTabbedPane
@@ -29,8 +30,10 @@ public class OptionPane extends JTabbedPane
 	{
 		tabbedComponents.put(s, newComponent);
 		JPanel tmp = new JPanel(new FlowLayout());
+		JScrollPane pane = new JScrollPane(tmp);
+		pane.setVisible(true);
 		tmp.add(newComponent);
-		this.addTab(s, tmp);
+		this.addTab(s, pane);
 	}
 	
 	public JComponent getTabbedComponent(String s)

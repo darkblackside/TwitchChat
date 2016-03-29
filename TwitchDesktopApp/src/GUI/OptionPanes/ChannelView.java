@@ -10,7 +10,6 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 
 import ViewModels.ChannelViewModel;
@@ -89,7 +88,6 @@ public class ChannelView extends JPanel
 		top.add(displayName);
 
 		top.setMinimumSize(new Dimension(380, 20));
-		top.setPreferredSize(new Dimension(480, 20));
 		top.setVisible(true);
 		
 		JPanel middle = new JPanel();
@@ -114,7 +112,6 @@ public class ChannelView extends JPanel
 		middle.add(partner, 11);
 
 		middle.setMinimumSize(new Dimension(380, 340));
-		middle.setPreferredSize(new Dimension(480, 340));
 		middle.setVisible(true);
 		
 		JPanel bottom = new JPanel();
@@ -128,26 +125,12 @@ public class ChannelView extends JPanel
 		bottom.add(abort);
 
 		bottom.setMinimumSize(new Dimension(380, 40));
-		bottom.setPreferredSize(new Dimension(480, 40));
 		bottom.setVisible(true);
 		
-		
-		JPanel scrolledPanel = new JPanel();
-		scrolledPanel.setLayout(new BorderLayout());
-		scrolledPanel.add(top, BorderLayout.NORTH);
-		scrolledPanel.add(middle, BorderLayout.CENTER);
-		scrolledPanel.add(bottom, BorderLayout.SOUTH);
-		scrolledPanel.setVisible(true);
-		scrolledPanel.setMinimumSize(new Dimension(380, 400));
-		scrolledPanel.setPreferredSize(new Dimension(460, 560));
-		
-		JScrollPane scrollPane = new JScrollPane(scrolledPanel);
-		scrollPane.setMinimumSize(new Dimension(380, 380));
-		scrollPane.setPreferredSize(new Dimension(500, 580));
-		scrollPane.setMaximumSize(new Dimension(500, 580));
-		scrollPane.setVisible(true);
-		
-		this.add(scrollPane, BorderLayout.CENTER);
+		this.setLayout(new BorderLayout());
+		this.add(top, BorderLayout.NORTH);
+		this.add(middle, BorderLayout.CENTER);
+		this.add(bottom, BorderLayout.SOUTH);
 		this.setVisible(true);
 	}
 	
